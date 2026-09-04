@@ -53,13 +53,13 @@ void asignar_prioridad(List *lista) {
 
   Grupo *grupo_encontrado = NULL;
 
-  Grupo *g = (Grupo *)list_first(lista);
-  while (g != NULL) {
-    if (strcmp(g->id, id_buscar) == 0) {
-      grupo_encontrado = g;
+  Grupo *grupo_actual = (Grupo *)list_first(lista);
+  while (grupo_actual != NULL) {
+    if (strcmp(grupo_actual->id, id_buscar) == 0) {
+      grupo_encontrado = grupo_actual;
       break;
     }
-    g = (Grupo *)list_next(lista);
+    grupo_actual = (Grupo *)list_next(lista);
   }
   
   if (grupo_encontrado != NULL) {
@@ -82,15 +82,15 @@ void mostrar_lista_pendiente(List *lista) {
   char *prioridades[] = {"VIP", "Grupo Grande", "Estándar"};
   int contador = 1;
   for (int i = 0; i < 3; i++) {
-    Grupo *g = (Grupo *)list_first(lista);
-    while (g != NULL) {
-      if (strcmp(g->prioridad, prioridades[i]) == 0) {
-        struct tm *tm_info = localtime(&g->hora_registro);
+    Grupo *grupo_actual = (Grupo *)list_first(lista);
+    while (grupo_actual != NULL) {
+      if (strcmp(grupo_actual->prioridad, prioridades[i]) == 0) {
+        struct tm *tm_info = localtime(&grupo_actual->hora_registro);
         char buffer[10];
         strftime(buffer, 10, "%H:%M", tm_info);
-        printf("%d. [%s] %s - %d personas (Hora: %s)\n", contador++, g->prioridad, g->id, g->cantidad_personas, buffer);
+        printf("%d. [%s] %s - %d personas (Hora: %s)\n", contador++, grupo_actual->prioridad, grupo_actual->id, grupo_actual->cantidad_personas, buffer);
       }
-      g = (Grupo *)list_next(lista);
+      grupo_actual = (Grupo *)list_next(lista);
     }
   }
   if (contador == 1) {
@@ -98,8 +98,69 @@ void mostrar_lista_pendiente(List *lista) {
   }
 }
 
+void asignar_mesa(List *lista) {
+  char *prioridades[] = {"VIP", "Grupo Grande", "Estándar"};
+  Grupo *grupo_asignado = NULL;
+
+  for (int i = 0; i < 3; i++) {
+    Grupo *grupo_actual = (Grupo *)list_first(lista);
+    while (grupo_actual != NULL) {
+      if (strcmp(grupo_actual->prioridad, prioridades[i]) == 0) {
+        grupo_asignado = grupo_actual;
+        list_popCurrent(lista);
+        break;
+      }
+      grupo_actual = (Grupo *)list_next(lista);
+    }
+    if (grupo_asignado != NULL) break;
+  }
+  if (grupo_asignado != NULL) {
+    printf("Mesa asignada exitosamente:\n");
+    printf("- Cliente: %s\n", grupo_asignado->id);
+    printf("- Personas: %d\n", grupo_asignado->cantidad_personas);
+    printf("- Prioridad: %s\n", grupo_asignado->prioridad);
+    free(grupo_asignado);
+  } else {
+    printf("Aviso: No hay grupos pendientes en la lista de espera.\n");
+  }
+}
+
+void buscar_reserva(List *lista) {
+  char id_buscar[50];
+  printf("Ingrese el ID o Nombre del cliente a buscar: ");
+  int caracter_temporal;
+  while ((caracter_temporal = getchar()) != '\n' && caracter_temporal != EOF);
+  fgets(id_buscar, 50, stdin);
+  id_buscar[strcspn(id_buscar, "\n")] = '\0';
+
+  Grupo *grupo_actual = (Grupo *)list_first(lista);
+  while (grupo_actual != NULL) {
+    if (strcmp(grupo_actual->id, id_buscar) == 0) {
+      struct tm *tm_info = localtime(&grupo_actual->hora_registro);
+      char buffer[10];
+      strftime(buffer, 10, "%H:%M", tm_info);
+      printf("\n--- Detalles de la Reserva ---\n");
+      printf("Cliente: %s\n", grupo_actual->id);
+      printf("Cantidad de personas: %d\n", grupo_actual->cantidad_personas);
+      printf("Prioridad: %s\n", grupo_actual->prioridad);
+      printf("Hora de registro: %s\n", buffer);
+      return;
+    }
+    grupo_actual = (Grupo *)list_next(lista);
+  }
+  printf("Error: No se encontró la reserva con el ID '%s'.\n", id_buscar);
+}
 
 int main(){
+  // Todos los comandos de abajo fueron buscados para poder establecer la hora chilena.
+  #ifdef _WIN32 
+    _putenv("TZ=America/Santiago");
+  #else
+    setenv("TZ", "America/Santiago", 1);
+  #endif
+  tzset();
+  // Todos los comandos de arriba fueron buscados para poder establecer la hora chilena.
+  
   char opcion;
   List *lista_espera = list_create();
 
@@ -118,14 +179,25 @@ int main(){
       case '3':
         mostrar_lista_pendiente(lista_espera);
         break;
+      case '4':
+        asignar_mesa(lista_espera);
+        break;
+      case '5':
+        buscar_reserva(lista_espera);
+        break;
+      case '6':
+        puts("Saliendo del sistema...");
+        break;
+      default : 
+        puts("Opción no válida.");
     }
-    presioneTeclaParaContinuar();
+    if (opcion != '6') presioneTeclaParaContinuar();
   } while(opcion != '6');
 
-  Grupo *g = (Grupo *)list_first(lista_espera);
-  while (g != NULL) {
+  Grupo *grupo_a_liberar = (Grupo *)list_first(lista_espera);
+  while (grupo_a_liberar != NULL) {
     list_popCurrent(lista_espera);
-    g = (Grupo *)list_first(lista_espera);
+    grupo_a_liberar = (Grupo *)list_first(lista_espera);
   }
   list_clean(lista_espera);
   return 0;
