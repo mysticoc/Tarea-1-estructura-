@@ -49,4 +49,4 @@ Todas las funcionalidades requeridas operan correctamente y manejan la memoria d
 7. Se selecciona la Opción 6 para cerrar el sistema.
 
 ## 4. Contribuciones
-* Trabajo realizado de manera individual por Nicolás Ignacio Garrido Vergara- 
+* Trabajo realizado de manera individual por Nicolás Ignacio Garrido Vergara
