@@ -50,3 +50,4 @@ Todas las funcionalidades requeridas operan correctamente y manejan la memoria d
 
 ## 4. Contribuciones
 * Trabajo realizado de manera individual por Nicolás Ignacio Garrido Vergara
+* a
